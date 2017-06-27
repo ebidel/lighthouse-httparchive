@@ -1,0 +1,14 @@
+{
+  "name": "lighthouse-data",
+  "version": "1.0.0",
+  "description": "Lighthouse HTTPArchive Data",
+  "main": "fetch_bigquery_data.js",
+  "scripts": {
+    "updatedb": "node fetch_bigquery_data.js"
+  },
+  "author": "Eric Bidelman <ebidel@>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "google-cloud": "^0.55.0"
+  }
+}
