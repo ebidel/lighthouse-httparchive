@@ -1,0 +1,233 @@
+<!--
+Copyright 2017 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <title>Lighthouse Stats</title>
+  <link rel="shortcut icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAEfElEQVR4Aa2WA5B0RxDH/z3zuDp/tq2Lbdu2XUoxKMW2bdu2nZxte/dpplO3hTjZ2s0z5zftpkVrFXJYGCBAggEoUPY2p0XkOLoJNoE+yH5II3vLOQJyHL0bsgpiC9G1meishuiBzJEhchm9HXIL0fu5e949TuX1cvVbxplbiu6O3BjiP19HEFMpuNI9Z4O8XpIlKb6SbrnQOG0WeQGkKATAgAVdz3Sw/G6BenwoXAnls/JH1IqZ0fN70DeN2Q84b4AA0jBWkHewfXsUh0ykKSZTcVGamoincKR7xyrKpGH8uxDGv0vgmOqXZuf1o87ccP6wCpIkgb5ePZw2Yvj0icN+eshdMUcFIRVgAwIyGHTKUGqLEluUOWJqkpISRRi2S+BDgAuyAYHhwYsIxCACM/wMSQEBNXkLAjhvFVnEP2WMYzdvO6/4muDZMVCavSD8ujHDQkmxe90VP8y+5s1oznSoCJSfkRkC07yBhd3XRz+m1bd9/tN14XMd3kutI4/5s1qfnmEPjWgIcL5GZoCQUcbA56Cpw4g8TguxZBYiloomfGRCE1SAigKIxZKfG1rCW7cddOhIFIEEEWutIeLmyy+nXni8bMkMDiORv5uaxHW+NRSbFhbL0AeBI9MOyZyRbkpO2D2WVQ7lgSg/L6IsA8xJ0zMiX5GMpFnc37L+/bs3uX/d8rrPkYJQXFAuIgJ8UNwMLaest7Hy3Vs2e/S4OZ9dB4YV09CgAnOR0IwkzR5p2+SNSzd+9Jhp394M6YbJBRCuISYAFJpN5SQAy2q/SP1wg3JnRIlFDAIRokwi6If4XyoaQzohYgmAASGiCWv4W6QqR5asQgBNVGjBAWDLcSAug1Fj9FOvaH7tztd+fOhDzZXbYoiVKBwgkAiGMdYzPnVN1V6PfXLI9dUb9vHtZBwZ6RAYlHegAVkNBAjnzKzf4om6WVso2zFD3/HGyYZpGimjsJJJgBKUmOCarfdpXLYdAbY/QVplwVLHHMMEc4FGZhg2HBFZfppYg6GF4bkJGXiLWz6aYfg+CyoEoDVcC4ahmaGk6Ttx2x9b9t3Lmz9+9tp3Li5yw0CD8sumTExi8ujGoFwzbRuxgZ45tR/M+OlpZ+ATuHP9otluvxfqJBGzBmn6bwALhmQApAT5knyoYcRKsKC3Y+U3rxZ/8xzGPkNsLcwNSIcp3ZfqFpkxUNIgB7CZDQUAikjTHwEENjSYaFxiEIiACuYZozx1yC8dSZZ31U9cXl9W1bfvosDYkXRoMMcjuyjggcq37cGl0UBK95RQV5LasqOVACnNQiMSxKCFlSFFEp0EG3p1v15Rr+b/oqdWcVETOx0whpXwe3k+yAKHwB+63hR1JDjSUYnwp9PoPNG3TDSvkFVLxA/TMQTMBDsRLZrGPDVUO34TrX9LzfyQ3ToiQBVBJ6BtsCRGjEJiZqLfezDAabY0AaRAAeQE5CgjJG+u6NnS+HFH451NqSZO8879PNjpLl3xFnEMYQWUAzBIAxrEyHUhsJjcQBABzEEWA2Jkc/Ojk38Fe4MpHMjZ+XoAAAAASUVORK5CYII=">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Product+Sans:300,400,600">
+  <style>
+    :root {
+      --padding: 16px;
+      --title-color: var(--md-blue-grey-700);
+      --md-blue-grey-50: #ECEFF1;
+      --md-blue-grey-100: #CFD8DC;
+      --md-blue-grey-200: #B0BEC5;
+      --md-blue-grey-300: #90A4AE;
+      --md-blue-grey-400: #78909C;
+      --md-blue-grey-500: #607D8B;
+      --md-blue-grey-700: #455A64;
+      --md-blue-grey-900: #263238;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+    }
+    body {
+      padding: var(--padding);
+      font-family: "Product Sans", "Roboto", sans-serif;
+      font-weight: 300;
+      background-color: #fafafa;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    body.loading .loading {
+      display: block;
+    }
+    h1, h2, h3, h4 {
+      padding: 0;
+      margin: 0;
+      font-weight: inherit;
+    }
+    #wrapper {
+      max-width: 850px;
+      display: flex;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      margin-bottom: var(--padding);
+    }
+    .title {
+      font-size: 40px;
+      text-transform: uppercase;
+      color: var(--title-color);
+      margin-right: var(--padding);
+      flex: 1 0 auto;
+      text-align: center;
+    }
+    h1 {
+      font-size: 32px;
+    }
+    a {
+      color: currentcolor;
+    }
+    section {
+      margin-bottom: 51px; /* height of bottom footer */
+      width: 50%;
+    }
+    section:first-of-type {
+      margin-right: calc(var(--padding) * 2);
+    }
+    footer {
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      padding: var(--padding);
+      background-color: #eee;
+      color: var(--md-blue-grey-300);
+      text-align: center;
+    }
+    .shadow {
+      box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14),
+                  0 1px 5px 0 rgba(0, 0, 0, 0.12),
+                  0 3px 1px -2px rgba(0, 0, 0, 0.2);
+    }
+    .data-container {
+      display: flex;
+      flex-wrap: wrap;
+    }
+    .scorecard {
+      min-width: 150px;
+      flex: 1 1 auto;
+      padding: calc(var(--padding) / 2);
+      padding-top: calc(39px + var(--padding) / 2); /* height of top bar + padding */
+      border-radius: 3px;
+      margin-bottom: var(--padding);
+      background-color: #fff;
+      position: relative;
+    }
+    .scorecard-title {
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      font-size: 16px;
+      padding: calc(var(--padding) / 2) 0;
+      color: var(--md-blue-grey-50);
+      background: var(--md-blue-grey-500);
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-top-left-radius: inherit;
+      border-top-right-radius: inherit;
+    }
+    .scorecard-rows {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    .scorecard-row {
+      padding: 0 calc(var(--padding) / 2);
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+    }
+    .scorecard-rows[data-name$="performance"i] .scorecard-row-score,
+    .scorecard-rows[data-name$="weight"i] .scorecard-row-score {
+      margin-bottom: calc(var(--padding) / 2);
+    }
+    .scorecard-row-title {
+      color: var(--md-blue-grey-400);
+    }
+    .scorecard-row-score {
+      color: var(--title-color);
+    }
+    .loading-data .loading {
+      display: block;
+    }
+    .loading {
+      display: none;
+      color: #ccc;
+      text-align: center;
+      padding: calc(var(--padding) * 2);
+    }
+    @media (max-width: 678px) {
+      section {
+        margin-right: 0;
+      }
+      .scorecard.sidebyside {
+        margin-right: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div id="wrapper">
+  <section>
+    <header>
+      <h1 class="title">Mobile</h1>
+    </header>
+
+    <output id="mobile-results" class="data-container loading-data">
+      <div class="loading">Loading...</div>
+      <!-- filled dynamically -->
+    </output>
+  </section>
+
+  <section>
+    <header>
+      <h1 class="title">Desktop</h1>
+    </header>
+
+    <output id="desktop-results" class="data-container loading-data">
+      <div class="loading">Loading...</div>
+      <!-- filled dynamically -->
+    </output>
+  </section>
+</div>
+
+<footer>
+  <div><b>Median</b> values for the top <b>475k+</b> websites. Snapshot is from <span id="date"></span>. Provided by <a href="http://httparchive.org/" target="_blank" rel="noopener">httparchive.org</a>.</div>
+</footer>
+
+<template id="card-template">
+  <div class="scorecard shadow">
+    <div class="scorecard-title"></div>
+    <div class="scorecard-rows">
+        <div class="scorecard-row">
+        <span class="scorecard-row-title"><!-- filled dynamically --></span>
+        <h1 class="scorecard-row-score"><!-- filled dynamically --></h1>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script src="/filesize/lib/filesize.js" defer></script>
+<script src="/js/main.js" defer></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-85519014-3', 'auto');
+  ga('send', 'pageview');
+</script>
+</body>
+</html>

@@ -61,6 +61,17 @@ const CACHE_FILE = '.biqquery_cache.json';
 const BigQuery = gcloud.bigquery({projectId: PROJECT_ID});
 
 
+/**
+ * Returns the original object with sorted keys.
+ * @param {!Object} obj
+ * @return {!Object}
+ */
+function orderKeys(obj) {
+  const ordered = {};
+  Object.keys(obj).sort().forEach(key => ordered[key] = obj[key]);
+  return ordered;
+}
+
 class CacheFile {
   constructor(cacheFilename=CACHE_FILE) {
     this.file = path.join(__dirname, cacheFilename);
@@ -139,23 +150,12 @@ class BigQueryCache {
   }
 
   /**
-   * Returns the original object with sorted keys.
-   * @param {!Object} obj
-   * @return {!Object}
-   */
-  static orderKeys(obj) {
-    const ordered = {};
-    Object.keys(obj).sort().forEach(key => ordered[key] = obj[key]);
-    return ordered;
-  }
-
-  /**
    * @return {!Promise<string>} Resolves with the date string of the latest
    *     data dump. In YYYY-MM-DD.
    */
-  get latestFetchDate() {
+  latestFetchDate(onMobile) {
     if (this.cache.shouldCheckForLatestData()) {
-      return this.getLatestTableNameQuery();
+      return this.getLatestTableNameQuery(onMobile);
     }
     return Promise.resolve(this.cache.content.latestFetchDate);
   }
@@ -190,35 +190,39 @@ class BigQueryCache {
    */
   formatMedianResults(stats) {
     return {
-      render_start_median: Math.ceil(stats.render_start_median),
-      img_requests_median: Math.floor(stats.img_requests_median),
-      css_requests_median: Math.floor(stats.css_requests_median),
-      js_requests_median: Math.floor(stats.js_requests_median),
-      html_requests_median: Math.floor(stats.html_requests_median),
-      speed_index_median: Math.ceil(stats.speed_index_median),
-      css_bytes_median: Math.ceil(stats.css_bytes_median),
-      img_bytes_median: Math.ceil(stats.img_bytes_median),
-      js_bytes_median: Math.ceil(stats.js_bytes_median),
-      html_bytes_median: Math.ceil(stats.html_bytes_median),
-      html_doc_bytes_median: Math.ceil(stats.html_doc_bytes_median),
-      font_bytes_median: Math.floor(stats.font_bytes_median),
-      total_bytes_median: Math.ceil(stats.total_bytes_median),
-      num_dom_elements_median: Math.floor(stats.num_dom_elements_median),
-      percentage_https_requests_median: Math.floor(stats.percentage_https_requests_median),
+      render_start: Math.ceil(stats.render_start),
+      img_requests: Math.floor(stats.img_requests),
+      css_requests: Math.floor(stats.css_requests),
+      js_requests: Math.floor(stats.js_requests),
+      html_requests: Math.floor(stats.html_requests),
+      speed_index: Math.ceil(stats.speed_index),
+      css_bytes: Math.ceil(stats.css_bytes),
+      img_bytes: Math.ceil(stats.img_bytes),
+      js_bytes: Math.ceil(stats.js_bytes),
+      html_bytes: Math.ceil(stats.html_bytes),
+      html_doc_bytes: Math.ceil(stats.html_doc_bytes),
+      font_bytes: Math.floor(stats.font_bytes),
+      total_bytes: Math.ceil(stats.total_bytes),
+      num_dom_elements: Math.floor(stats.num_dom_elements),
+      percentage_https_requests: Math.floor(stats.percentage_https_requests),
     };
   }
 
   /**
+   * @param {boolean=} onMobile Optionally query mobile results instead of
+   *     desktop. Default is false.
    * @return {!Promise<string>} Date string of the latest data dump. In YYYY-MM-DD.
    */
-  getLatestTableNameQuery() {
+  getLatestTableNameQuery(onMobile = false) {
+    const view = onMobile ? 'pages_mobile': 'pages';
+
     const query = `
       SELECT
         label
       FROM
         TABLE_QUERY([httparchive:runs], "table_id IN (
               SELECT table_id FROM [httparchive:runs.__TABLES__]
-              WHERE REGEXP_MATCH(table_id, '2.*pages$')
+              WHERE REGEXP_MATCH(table_id, '2.*${view}$')
               ORDER BY table_id DESC LIMIT 1)")
       GROUP BY
         label`;
@@ -285,21 +289,21 @@ class BigQueryCache {
     const query = `
       SELECT
         #QUANTILES(renderStart, 11) AS speed_index_percentiles,
-        NTH(501, QUANTILES(renderStart, 1001)) AS render_start_median,
-        NTH(501, QUANTILES(SpeedIndex, 1001)) AS speed_index_median,
-        NTH(501, QUANTILES(bytesTotal, 1001)) AS total_bytes_median,
-        NTH(501, QUANTILES(bytesHtmlDoc, 1001)) AS html_doc_bytes_median,
-        NTH(501, QUANTILES(bytesHtml, 1001)) AS html_bytes_median,
-        NTH(501, QUANTILES(bytesImg, 1001)) AS img_bytes_median,
-        NTH(501, QUANTILES(bytesJS, 1001)) AS js_bytes_median,
-        NTH(501, QUANTILES(bytesCSS, 1001)) AS css_bytes_median,
-        NTH(501, QUANTILES(bytesFont, 1001)) AS font_bytes_median,
-        NTH(501, QUANTILES(reqImg, 1001)) AS img_requests_median,
-        NTH(501, QUANTILES(reqJs, 1001)) AS js_requests_median,
-        NTH(501, QUANTILES(reqHtml, 1001)) AS html_requests_median,
-        NTH(501, QUANTILES(reqCSS, 1001)) AS css_requests_median,
-        NTH(501, QUANTILES(numDomElements, 1001)) AS num_dom_elements_median,
-        NTH(501, QUANTILES(numHttps, 1001)) AS percentage_https_requests_median
+        NTH(501, QUANTILES(renderStart, 1001)) AS render_start,
+        NTH(501, QUANTILES(SpeedIndex, 1001)) AS speed_index,
+        NTH(501, QUANTILES(bytesTotal, 1001)) AS total_bytes,
+        NTH(501, QUANTILES(bytesHtmlDoc, 1001)) AS html_doc_bytes,
+        NTH(501, QUANTILES(bytesHtml, 1001)) AS html_bytes,
+        NTH(501, QUANTILES(bytesImg, 1001)) AS img_bytes,
+        NTH(501, QUANTILES(bytesJS, 1001)) AS js_bytes,
+        NTH(501, QUANTILES(bytesCSS, 1001)) AS css_bytes,
+        NTH(501, QUANTILES(bytesFont, 1001)) AS font_bytes,
+        NTH(501, QUANTILES(reqImg, 1001)) AS img_requests,
+        NTH(501, QUANTILES(reqJs, 1001)) AS js_requests,
+        NTH(501, QUANTILES(reqHtml, 1001)) AS html_requests,
+        NTH(501, QUANTILES(reqCSS, 1001)) AS css_requests,
+        NTH(501, QUANTILES(numDomElements, 1001)) AS num_dom_elements,
+        NTH(501, QUANTILES(numHttps, 1001)) AS percentage_https_requests
       FROM
         [httparchive.runs.${tableName}]
       `;
@@ -314,11 +318,11 @@ class BigQueryCache {
   /**
    * Queries BiqQuery API for latest results if cache content is stale. Updates
    * the cache file if necessary.
-   * @param {!string} latestFetchDate Date (YYYY-MM-DD) of the last httparchive
-   *     data dump in BigQuery.
    * @return {!Promise<Object>} Resolves with json results.
    */
-  getData(latestFetchDate) {
+  async getAllData() {
+    const latestFetchDate = await this.latestFetchDate();
+
     if (!this.cache.cacheNeedsUpdate(latestFetchDate)) {
       return Promise.resolve(this.cache.content);
     }
@@ -328,11 +332,11 @@ class BigQueryCache {
       // this.getLatestAveragesQuery(false),
       this.getMediansQuery(true),
       this.getMediansQuery(false)
-    ]).then(([mobileAvgs, desktopAvgs, mobileMedians, desktopMedians]) => {
+    ]).then(([mobileMedians, desktopMedians]) => {
       const json = {
         latestFetchDate,
-        mobile: BigQueryCache.orderKeys(Object.assign(mobileAvgs, mobileMedians)),
-        desktop: BigQueryCache.orderKeys(Object.assign(desktopAvgs, desktopMedians))
+        mobile: orderKeys(mobileMedians),
+        desktop: orderKeys(desktopMedians)
       };
 
       this.cache.writeJSONFile(json);
@@ -340,17 +344,51 @@ class BigQueryCache {
       return json;
     });
   }
+
+  // /**
+  //  * Queries BiqQuery API for latest results if cache content is stale. Updates
+  //  * the cache file if necessary.
+  //  * @param {boolean=} onMobile Optionally query mobile results instead of
+  //  *     desktop. Default is false.
+  //  * @return {!Promise<Object>} Resolves with json results.
+  //  */
+  // async getData(onMobile = false) {
+  //   const latestFetchDate = await this.latestFetchDate(onMobile);
+
+  //   if (!this.cache.cacheNeedsUpdate(latestFetchDate)) {
+  //     return Promise.resolve(this.cache.content);
+  //   }
+
+  //   return this.getMediansQuery(onMobile)
+  //     .then(([mobileAvgs, desktopAvgs, mobileMedians, desktopMedians]) => {
+  //       const json = {
+  //         latestFetchDate,
+  //         mobile: orderKeys(Object.assign(mobileAvgs, mobileMedians)),
+  //         desktop: orderKeys(Object.assign(desktopAvgs, desktopMedians))
+  //       };
+
+  //       // this.cache.writeJSONFile(json);
+
+  //       return json;
+  //     });
+  // }
 }
 
+
+// Run if called directly.
+if (require.main === module) {
 (async () => {
 
-const bq = new BigQueryCache();
+  const bq = new BigQueryCache();
 
-try {
-  const results = await bq.getData(await bq.latestFetchDate);
-  console.log(results);
-} catch(err) {
-  console.error(err);
-}
+  try {
+    const results = await bq.getAllData();
+    console.log(results);
+  } catch(err) {
+    console.error(err);
+  }
 
 })();
+}
+
+module.exports = BigQueryCache;
