@@ -172,8 +172,15 @@ limitations under the License.
       padding: calc(var(--padding) * 2);
     }
     @media (max-width: 678px) {
+      #wrapper {
+        justify-content: center;
+        flex-wrap: wrap;
+      }
       section {
-        margin-right: 0;
+        width: 100%;
+      }
+      section:last-child {
+        margin-bottom: 140px;
       }
       .scorecard.sidebyside {
         margin-right: 0;
