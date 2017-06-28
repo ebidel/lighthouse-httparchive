@@ -165,22 +165,23 @@ class BigQueryCache {
    * @return {!Object} Modified stats.
    */
   formatAvgResults(stats) {
-    const temp = {};
-    temp.render_start_avg = Math.ceil(stats.avg_render_start);
-    temp.img_requests_avg = Math.floor(stats.avg_img_requests);
-    temp.css_requests_avg = Math.floor(stats.avg_css_requests);
-    temp.js_requests_avg = Math.floor(stats.avg_js_requests);
-    temp.html_requests_avg = Math.floor(stats.avg_html_requests);
-    temp.speed_index_avg = Math.ceil(stats.avg_speed_index);
-    temp.css_bytes_avg = Math.ceil(stats.avg_css_bytes);
-    temp.img_bytes_avg = Math.ceil(stats.avg_img_bytes);
-    temp.js_bytes_avg = Math.ceil(stats.avg_js_bytes);
-    temp.html_bytes_avg = Math.ceil(stats.avg_html_bytes);
-    temp.html_doc_bytes_avg = Math.ceil(stats.avg_html_doc_bytes);
-    temp.font_bytes_avg = Math.ceil(stats.avg_font_bytes);
-    temp.total_bytes_avg = Math.ceil(stats.avg_total_bytes);
-    temp.num_dom_elements_avg = Math.floor(stats.avg_num_dom_elements);
-    temp.percentage_requests_https_avg = Math.floor(stats.avg_num_dom_elements);
+    const temp = {
+      render_start_avg: Math.ceil(stats.avg_render_start),
+      img_requests_avg: Math.floor(stats.avg_img_requests),
+      css_requests_avg: Math.floor(stats.avg_css_requests),
+      js_requests_avg: Math.floor(stats.avg_js_requests),
+      html_requests_avg: Math.floor(stats.avg_html_requests),
+      speed_index_avg: Math.ceil(stats.avg_speed_index),
+      css_bytes_avg: Math.ceil(stats.avg_css_bytes),
+      img_bytes_avg: Math.ceil(stats.avg_img_bytes),
+      js_bytes_avg: Math.ceil(stats.avg_js_bytes),
+      html_bytes_avg: Math.ceil(stats.avg_html_bytes),
+      html_doc_bytes_avg: Math.ceil(stats.avg_html_doc_bytes),
+      font_bytes_avg: Math.ceil(stats.avg_font_bytes),
+      total_bytes_avg: Math.ceil(stats.avg_total_bytes),
+      num_dom_elements_avg: Math.floor(stats.avg_num_dom_elements),
+      percentage_requests_https_avg: Math.floor(stats.avg_num_dom_elements),
+    };
     return temp;
   }
 
@@ -362,6 +363,8 @@ class BigQueryCache {
     const dateStr = latestFetchDate.replace(/-/g, '_');
     const tableName = `${dateStr}_${view}_pages`;
 
+    // Calculates medians with 0.1% error.
+    // See https://cloud.google.com/bigquery/docs/reference/legacy-sql#quantiles
     // Note: If reportCategories changes its order, this query needs to be updated.
     const query = `
       SELECT
@@ -379,7 +382,6 @@ class BigQueryCache {
     console.info(`BigQuery: fetching medians from table: ${tableName}`);
 
     return BigQuery.query({query, useLegacySql: true}).then(results => {
-      // return this.formatMedianResults(results[0][0]);
       return results[0][0];
     });
   }
@@ -390,10 +392,8 @@ if (require.main === module) {
 (async () => {
 
   const bq = new BigQueryCache();
-
   try {
     const results = await bq.getAllData();
-    // const results = await bq.getLighthouseData(true);
     console.log(results);
   } catch(err) {
     console.error(err);
