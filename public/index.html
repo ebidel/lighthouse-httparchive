@@ -61,7 +61,7 @@ limitations under the License.
       font-weight: inherit;
     }
     #wrapper {
-      max-width: 850px;
+      max-width: 1000px;
       display: flex;
     }
     header {
@@ -77,6 +77,9 @@ limitations under the License.
       flex: 1 0 auto;
       text-align: center;
     }
+    .title a {
+      text-decoration: none;
+    }
     h1 {
       font-size: 32px;
     }
@@ -85,10 +88,10 @@ limitations under the License.
     }
     section {
       margin-bottom: 51px; /* height of bottom footer */
-      width: 50%;
+      width: 33.33%;
     }
-    section:first-of-type {
-      margin-right: calc(var(--padding) * 2);
+    section:nth-child(odd) {
+      margin: 0 calc(var(--padding) * 2);
     }
     footer {
       position: fixed;
@@ -146,6 +149,8 @@ limitations under the License.
       display: flex;
       align-items: center;
       flex-direction: column;
+      flex: 1;
+      white-space: nowrap;
     }
     .scorecard-rows[data-name$="performance"i] .scorecard-row-score,
     .scorecard-rows[data-name$="weight"i] .scorecard-row-score {
@@ -181,21 +186,27 @@ limitations under the License.
 <div id="wrapper">
   <section>
     <header>
+      <h1 class="title">Desktop</h1>
+    </header>
+    <output id="desktop-results" class="data-container loading-data">
+      <div class="loading">Loading...</div>
+      <!-- filled dynamically -->
+    </output>
+  </section>
+  <section>
+    <header>
       <h1 class="title">Mobile</h1>
     </header>
-
     <output id="mobile-results" class="data-container loading-data">
       <div class="loading">Loading...</div>
       <!-- filled dynamically -->
     </output>
   </section>
-
   <section>
     <header>
-      <h1 class="title">Desktop</h1>
+      <h1 class="title"><a href="https://developers.google.com/web/tools/lighthouse/" target="_blank">Lighthouse</a></h1>
     </header>
-
-    <output id="desktop-results" class="data-container loading-data">
+    <output id="lighthouse-results" class="data-container loading-data">
       <div class="loading">Loading...</div>
       <!-- filled dynamically -->
     </output>
@@ -210,7 +221,7 @@ limitations under the License.
   <div class="scorecard shadow">
     <div class="scorecard-title"></div>
     <div class="scorecard-rows">
-        <div class="scorecard-row">
+      <div class="scorecard-row">
         <span class="scorecard-row-title"><!-- filled dynamically --></span>
         <h1 class="scorecard-row-score"><!-- filled dynamically --></h1>
       </div>

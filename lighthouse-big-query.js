@@ -331,12 +331,14 @@ class BigQueryCache {
       // this.getLatestAveragesQuery(true),
       // this.getLatestAveragesQuery(false),
       this.getMediansQuery(true),
-      this.getMediansQuery(false)
-    ]).then(([mobileMedians, desktopMedians]) => {
+      this.getMediansQuery(false),
+      this.getLighthouseData(true)
+    ]).then(([mobileMedians, desktopMedians, lighthouseData]) => {
       const json = {
         latestFetchDate,
         mobile: orderKeys(mobileMedians),
-        desktop: orderKeys(desktopMedians)
+        desktop: orderKeys(desktopMedians),
+        lighthouse: lighthouseData
       };
 
       this.cache.writeJSONFile(json);
@@ -345,35 +347,43 @@ class BigQueryCache {
     });
   }
 
-  // /**
-  //  * Queries BiqQuery API for latest results if cache content is stale. Updates
-  //  * the cache file if necessary.
-  //  * @param {boolean=} onMobile Optionally query mobile results instead of
-  //  *     desktop. Default is false.
-  //  * @return {!Promise<Object>} Resolves with json results.
-  //  */
-  // async getData(onMobile = false) {
-  //   const latestFetchDate = await this.latestFetchDate(onMobile);
+  /**
+   * @param {boolean=} onMobile Optionally query mobile results instead of
+   *     desktop. Default is false.
+   * @return {!Promise<Object>} Resolves with json results.
+   */
+  async getLighthouseData(onMobile = false) {
+    const latestFetchDate = await this.latestFetchDate();
+    if (!this.cache.cacheNeedsUpdate(latestFetchDate) && this.cache.content.lighthouse) {
+      return Promise.resolve(this.cache.content);
+    }
 
-  //   if (!this.cache.cacheNeedsUpdate(latestFetchDate)) {
-  //     return Promise.resolve(this.cache.content);
-  //   }
+    const view = onMobile ? 'android' : 'chrome';
+    const dateStr = latestFetchDate.replace(/-/g, '_');
+    const tableName = `${dateStr}_${view}_pages`;
 
-  //   return this.getMediansQuery(onMobile)
-  //     .then(([mobileAvgs, desktopAvgs, mobileMedians, desktopMedians]) => {
-  //       const json = {
-  //         latestFetchDate,
-  //         mobile: orderKeys(Object.assign(mobileAvgs, mobileMedians)),
-  //         desktop: orderKeys(Object.assign(desktopAvgs, desktopMedians))
-  //       };
+    // Note: If reportCategories changes its order, this query needs to be updated.
+    const query = `
+      SELECT
+        #NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(lighthouse, '$.audits.first-meaningful-paint.rawValue') AS FLOAT), 1001)) AS lhFMP,
+        #NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(lighthouse, '$.audits.dom-size.rawValue') AS FLOAT), 1001)) AS lhDomSize,
+        NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(lighthouse, '$.reportCategories[0].score') AS FLOAT), 1001)) AS pwaScore,
+        NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(lighthouse, '$.reportCategories[1].score') AS FLOAT), 1001)) AS perfScore,
+        NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(lighthouse, '$.reportCategories[2].score') AS FLOAT), 1001)) AS a11yScore,
+        NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(lighthouse, '$.reportCategories[3].score') AS FLOAT), 1001)) AS bestPracticesScore
+      FROM
+        [httparchive.har.${tableName}]
+      WHERE
+        lighthouse != 'null'`;
 
-  //       // this.cache.writeJSONFile(json);
+    console.info(`BigQuery: fetching medians from table: ${tableName}`);
 
-  //       return json;
-  //     });
-  // }
+    return BigQuery.query({query, useLegacySql: true}).then(results => {
+      // return this.formatMedianResults(results[0][0]);
+      return results[0][0];
+    });
+  }
 }
-
 
 // Run if called directly.
 if (require.main === module) {
@@ -383,6 +393,7 @@ if (require.main === module) {
 
   try {
     const results = await bq.getAllData();
+    // const results = await bq.getLighthouseData(true);
     console.log(results);
   } catch(err) {
     console.error(err);

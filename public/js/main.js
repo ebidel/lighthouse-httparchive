@@ -17,6 +17,27 @@
 
 'use strict';
 
+const KEYS_TO_LABEL = {
+  total_bytes: 'Total',
+  img_bytes: 'Images',
+  html_doc_bytes: 'Size of main page',
+  html_bytes: 'HTML',
+  css_bytes: 'CSS',
+  font_bytes: 'Fonts',
+  js_bytes: 'JS',
+  js_requests: 'JS',
+  css_requests: 'CSS',
+  img_requests: 'Images',
+  html_requests: 'HTML',
+  num_dom_elements: '# of DOM nodes',
+  render_start: 'First paint (ms)',
+  speed_index: 'Page Speed Index',
+  pwaScore: 'Score',
+  bestPracticesScore: 'Score',
+  a11yScore: 'Score',
+  perfScore: 'Score',
+};
+
 function createCard(label, vals) {
   const tmpl = document.querySelector('#card-template');
   const card = document.importNode(tmpl.content, true);
@@ -52,7 +73,7 @@ function formatBytesToKb(bytes) {
 }
 
 function formatNumber(num) {
-  return {raw: num, formatted: num};
+  return {raw: num, formatted: Math.round(num)};
 }
 
 function sortArrayOfObjectsByValues(stats) {
@@ -70,8 +91,6 @@ function sortArrayOfObjectsByValues(stats) {
 }
 
 function render(stats, container) {
-  const docFragment = new DocumentFragment();
-
   const KEYS = {size: 'Weight', requests: 'Requests', perf: 'Page performance'};
   const groups = {
     [KEYS.size]: [],
@@ -79,27 +98,9 @@ function render(stats, container) {
     [KEYS.perf]: []
   };
 
-  const keyToLabel = {
-    total_bytes: 'Total',
-    img_bytes: 'Images',
-    html_doc_bytes: 'Size of main page',
-    html_bytes: 'HTML',
-    css_bytes: 'CSS',
-    font_bytes: 'Fonts',
-    js_bytes: 'JS',
-    js_requests: 'JS',
-    css_requests: 'CSS',
-    img_requests: 'Images',
-    html_requests: 'HTML',
-    num_dom_elements: '# of DOM nodes',
-    render_start: 'First paint (ms)',
-    speed_index: 'Page Speed Index',
-  };
-
   // Construct formatted object for rendering.
   for (const [key, val] of Object.entries(stats)) {
-    const label = keyToLabel[key];
-
+    const label = KEYS_TO_LABEL[key];
     if (!label) {
       continue;
     }
@@ -115,6 +116,8 @@ function render(stats, container) {
     }
   }
 
+  const docFragment = new DocumentFragment();
+
   // Create a card for each group.
   // eslint-disable-next-line prefer-const
   for (let [label, values] of Object.entries(groups)) {
@@ -129,28 +132,53 @@ function render(stats, container) {
   container.appendChild(docFragment);
 }
 
+function renderLHResults(stats) {
+  const KEYS = {
+    perfScore: 'Performance',
+    pwaScore: 'PWA',
+    a11yScore: 'Accessibility',
+    bestPracticesScore: 'Best Practices',
+  };
+  const groups = {
+    [KEYS.perfScore]: [],
+    [KEYS.pwaScore]: [],
+    [KEYS.a11yScore]: [],
+    [KEYS.bestPracticesScore]: [],
+  };
+
+  // Construct formatted object for rendering.
+  for (const [key, val] of Object.entries(stats)) {
+    const label = KEYS_TO_LABEL[key];
+    if (!label) {
+      continue;
+    }
+
+    groups[KEYS[key]].push({label, value: formatNumber(val)});
+  }
+
+  const docFragment = new DocumentFragment();
+  for (let [label, values] of Object.entries(groups)) {
+    docFragment.appendChild(createCard(label, values));
+  }
+
+  const lighthouseContainer = document.querySelector('#lighthouse-results');
+  lighthouseContainer.appendChild(docFragment);
+  lighthouseContainer.classList.remove('loading-data');
+}
+
 function fetchData() {
-  // fetch('/data?platform=mobile').then(resp => resp.json()).then(stats => {
-  //   const container = document.querySelector('#mobile-results');
-  //   render(stats, container);
-  //   container.classList.remove('loading-data');
-  // });
-  // fetch('/data?platform=desktop').then(resp => resp.json()).then(stats => {
-  //   const container = document.querySelector('#desktop-results');
-  //   render(stats, container);
-  //   container.classList.remove('loading-data');
-  // });
   fetch('/data?2017-06-27').then(resp => resp.json()).then(stats => {
     document.querySelector('#date').textContent = stats.latestFetchDate;
-    // delete stats['date']; // ditch the date so it doesn't show up in the UI.
 
     const mobileContainer = document.querySelector('#mobile-results');
     render(stats.mobile, mobileContainer);
     mobileContainer.classList.remove('loading-data');
 
-    const desktopContinaer = document.querySelector('#desktop-results');
-    render(stats.desktop, desktopContinaer);
-    desktopContinaer.classList.remove('loading-data');
+    const desktopContainer = document.querySelector('#desktop-results');
+    render(stats.desktop, desktopContainer);
+    desktopContainer.classList.remove('loading-data');
+
+    renderLHResults(stats.lighthouse);
   });
 }
 
