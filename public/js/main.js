@@ -32,10 +32,10 @@ const KEYS_TO_LABEL = {
   num_dom_elements: '# of DOM nodes',
   render_start: 'First paint (ms)',
   speed_index: 'Page Speed Index',
-  pwaScore: 'Score',
-  bestPracticesScore: 'Score',
-  a11yScore: 'Score',
-  perfScore: 'Score',
+  pwaScore: 'Mobile score',
+  bestPracticesScore: 'Mobile score',
+  a11yScore: 'Mobile score',
+  perfScore: 'Mobile score',
 };
 
 function createCard(label, vals) {
