@@ -368,8 +368,10 @@ class BigQueryCache {
     // Note: If reportCategories changes its order, this query needs to be updated.
     const query = `
       SELECT
-        #NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(lighthouse, '$.audits.first-meaningful-paint.rawValue') AS FLOAT), 1001)) AS lhFMP,
-        #NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(lighthouse, '$.audits.dom-size.rawValue') AS FLOAT), 1001)) AS lhDomSize,
+        NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(lighthouse, '$.audits.first-meaningful-paint.rawValue') AS FLOAT), 1001)) AS lhFMP,
+        NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(lighthouse, '$.audits.first-interactive.rawValue') AS FLOAT), 1001)) AS lhFirstInteractive,
+        NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(lighthouse, '$.audits.consistently-interactive.rawValue') AS FLOAT), 1001)) AS lhConsistentlyInteractive,
+        NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(lighthouse, '$.audits.dom-size.rawValue') AS FLOAT), 1001)) AS lhDomSize,
         NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(lighthouse, '$.reportCategories[0].score') AS FLOAT), 1001)) AS pwaScore,
         NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(lighthouse, '$.reportCategories[1].score') AS FLOAT), 1001)) AS perfScore,
         NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(lighthouse, '$.reportCategories[2].score') AS FLOAT), 1001)) AS a11yScore,

@@ -32,10 +32,12 @@ const KEYS_TO_LABEL = {
   num_dom_elements: '# of DOM nodes',
   render_start: 'First paint (ms)',
   speed_index: 'Page Speed Index',
-  pwaScore: 'Mobile score',
-  bestPracticesScore: 'Mobile score',
-  a11yScore: 'Mobile score',
-  perfScore: 'Mobile score',
+  pwaScore: 'Progressive Web App',
+  bestPracticesScore: 'Best Practices',
+  a11yScore: 'Accessibility',
+  perfScore: 'Performance',
+  lhFirstInteractive: 'First Interactive (ms)',
+  lhConsistentlyInteractive: 'Consistently Interactive (ms)',
 };
 
 function createCard(label, vals) {
@@ -73,7 +75,7 @@ function formatBytesToKb(bytes) {
 }
 
 function formatNumber(num) {
-  return {raw: num, formatted: Math.round(num)};
+  return {raw: num, formatted: num.toLocaleString(undefined, {maximumFractionDigits: 0})};
 }
 
 function sortArrayOfObjectsByValues(stats) {
@@ -134,16 +136,12 @@ function render(stats, container) {
 
 function renderLHResults(stats) {
   const KEYS = {
-    perfScore: 'Performance',
-    pwaScore: 'PWA',
-    a11yScore: 'Accessibility',
-    bestPracticesScore: 'Best Practices',
+    categories: 'Report scores',
+    interactive: 'Interactivity',
   };
   const groups = {
-    [KEYS.perfScore]: [],
-    [KEYS.pwaScore]: [],
-    [KEYS.a11yScore]: [],
-    [KEYS.bestPracticesScore]: [],
+    [KEYS.categories]: [],
+    [KEYS.interactive]: [],
   };
 
   // Construct formatted object for rendering.
@@ -153,7 +151,11 @@ function renderLHResults(stats) {
       continue;
     }
 
-    groups[KEYS[key]].push({label, value: formatNumber(val)});
+    if (key.endsWith('Interactive')) {
+      groups[KEYS.interactive].push({label, value: formatNumber(val)});
+    } else {
+      groups[KEYS.categories].push({label, value: formatNumber(val)});
+    }
   }
 
   const docFragment = new DocumentFragment();
