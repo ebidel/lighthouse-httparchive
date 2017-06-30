@@ -242,6 +242,29 @@ class BigQueryCache {
   }
 
   /**
+   * Gets the latest table of lighthouse data.
+   * @return {!Promise<string>} Date string of the latest data dump. In YYYY-MM-DD.
+   */
+  getLatestLighthouseTableNameQuery() {
+    const query = `
+      SELECT table_id FROM httparchive.har.__TABLES__
+      WHERE REGEXP_MATCH(table_id, '2.*_android_lighthouse$')
+      ORDER BY table_id DESC LIMIT 1`;
+
+    console.info('BigQuery: fetching latest table names for lighthouse results...');
+
+    if (this.cache.fileExists) {
+      // Update cache file's last modified timestamp.
+      const now = new Date();
+      fs.utimesSync(this.cache.file, now, now);
+    }
+
+    return BigQuery.query({query}).then(results => {
+      return results[0][0].table_id.split('_android_lighthouse')[0].replace(/_/g, '-');
+    });
+  }
+
+  /**
    * @param {boolean=} onMobile Optionally query mobile results instead of
    *     desktop. Default is false.
    * @return {!Promise<Object>}
@@ -333,7 +356,7 @@ class BigQueryCache {
       // this.getLatestAveragesQuery(false),
       this.getMediansQuery(true),
       this.getMediansQuery(false),
-      this.getLighthouseData(true)
+      this.getLighthouseData()
     ]).then(([mobileMedians, desktopMedians, lighthouseData]) => {
       const json = {
         latestFetchDate,
@@ -349,37 +372,36 @@ class BigQueryCache {
   }
 
   /**
-   * @param {boolean=} onMobile Optionally query mobile results instead of
-   *     desktop. Default is false.
    * @return {!Promise<Object>} Resolves with json results.
    */
-  async getLighthouseData(onMobile = false) {
-    const latestFetchDate = await this.latestFetchDate();
-    if (!this.cache.cacheNeedsUpdate(latestFetchDate) && this.cache.content.lighthouse) {
-      return Promise.resolve(this.cache.content);
-    }
+  async getLighthouseData() {
+    // const latestFetchDate = await this.latestFetchDate();
+    // if (!this.cache.cacheNeedsUpdate(latestFetchDate) && this.cache.content.lighthouse) {
+    //   return Promise.resolve(this.cache.content);
+    // }
+    // Don't assume latest data for lighthouse is from the same date as the latest runs tables.
+    const latestFetchDate = await this.getLatestLighthouseTableNameQuery();
 
-    const view = onMobile ? 'android' : 'chrome';
     const dateStr = latestFetchDate.replace(/-/g, '_');
-    const tableName = `${dateStr}_${view}_pages`;
+    const tableName = `${dateStr}_android_lighthouse`;
 
     // Calculates medians with 0.1% error.
     // See https://cloud.google.com/bigquery/docs/reference/legacy-sql#quantiles
     // Note: If reportCategories changes its order, this query needs to be updated.
     const query = `
       SELECT
-        NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(lighthouse, '$.audits.first-meaningful-paint.rawValue') AS FLOAT), 1001)) AS lhFMP,
-        NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(lighthouse, '$.audits.first-interactive.rawValue') AS FLOAT), 1001)) AS lhFirstInteractive,
-        NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(lighthouse, '$.audits.consistently-interactive.rawValue') AS FLOAT), 1001)) AS lhConsistentlyInteractive,
-        NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(lighthouse, '$.audits.dom-size.rawValue') AS FLOAT), 1001)) AS lhDomSize,
-        NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(lighthouse, '$.reportCategories[0].score') AS FLOAT), 1001)) AS pwaScore,
-        NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(lighthouse, '$.reportCategories[1].score') AS FLOAT), 1001)) AS perfScore,
-        NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(lighthouse, '$.reportCategories[2].score') AS FLOAT), 1001)) AS a11yScore,
-        NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(lighthouse, '$.reportCategories[3].score') AS FLOAT), 1001)) AS bestPracticesScore
+        NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(report, '$.audits.first-meaningful-paint.rawValue') AS FLOAT), 1001)) AS lhFMP,
+        NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(report, '$.audits.first-interactive.rawValue') AS FLOAT), 1001)) AS lhFirstInteractive,
+        NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(report, '$.audits.consistently-interactive.rawValue') AS FLOAT), 1001)) AS lhConsistentlyInteractive,
+        NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(report, '$.audits.dom-size.rawValue') AS FLOAT), 1001)) AS lhDomSize,
+        NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(report, '$.reportCategories[0].score') AS FLOAT), 1001)) AS pwaScore,
+        NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(report, '$.reportCategories[1].score') AS FLOAT), 1001)) AS perfScore,
+        NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(report, '$.reportCategories[2].score') AS FLOAT), 1001)) AS a11yScore,
+        NTH(501, QUANTILES(CAST(JSON_EXTRACT_SCALAR(report, '$.reportCategories[3].score') AS FLOAT), 1001)) AS bestPracticesScore
       FROM
         [httparchive.har.${tableName}]
       WHERE
-        lighthouse != 'null'`;
+        report != 'null'`;
 
     console.info(`BigQuery: fetching medians from table: ${tableName}`);
 
